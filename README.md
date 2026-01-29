@@ -1,8 +1,13 @@
 # Розгортання та запуск застосунку:
 
-1. Завантажити репозиторій **git clone https://github.com/lhorneta/tat.git**
-
-2. Перейти до папки проекту **cd tat/**
+1. Завантажити репозиторій 
+```bash 
+git clone https://github.com/lhorneta/tat.git
+```
+2. Перейти до папки проекту 
+```
+cd tat/
+```
 
 3. Встановити node_modules
 ```bash
