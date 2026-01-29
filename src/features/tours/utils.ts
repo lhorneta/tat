@@ -18,7 +18,7 @@ export const getDropdownIcon = (option: type.GeoEntity) => {
 
 export const getCountryIDFromInputValue = (inputValue: string, countries: type.Country[], hotels: type.Hotel[]) => {
 
-    let
+    const
         tt1 = Object.values(countries).filter((item): type.Country | boolean => item?.name.includes(inputValue)),
         tt2 = Object.values(hotels).filter((item): type.Hotel | boolean => item?.name.includes(inputValue)),
         tt3 = Object.values(hotels).filter((item): type.Hotel | boolean => item?.countryName.includes(inputValue)),
@@ -27,14 +27,17 @@ export const getCountryIDFromInputValue = (inputValue: string, countries: type.C
     return (tt1.length && tt1[0]?.id) || (tt2.length && tt2[0]?.countryId) || (tt3.length && tt3[0]?.countryId) || (tt4.length && tt4[0]?.countryId)
 }
 
+export const getHotelIDList = (hotels: type.Hotel[]) => Object.values(hotels).map((item: type.Hotel): number => item.id)
+
 export const getFlagIconByCountryId = (countryList: type.Country[], countryID: string) =>
     Object.values(countryList).filter((item): type.Country | boolean => item?.id === countryID)[0].flag
 
-export const prepareAndAggregateDataToRenderHotels = (tours: type.Tour[], hotels: type.Hotel[], countryList: type.Country[]) => {
+export const prepareAndAggregateDataToRenderHotels = (tours: type.Tour[], hotels: type.Hotel[], countryList: type.Country[], hotelDescription: type.HotelDescription[]) => {
 
-    let toursList = Object.values(tours)
-    let hotelsList = Object.values(hotels)
-    let preparedHotelList: type.Tour[] = [];
+    const
+        toursList = Object.values(tours),
+        hotelsList = Object.values(hotels),
+        preparedHotelList: type.Tour[] = [];
 
     for (const [key, value] of Object.entries(toursList[0])) {
         const filterHotelList = Object.fromEntries(
@@ -43,8 +46,9 @@ export const prepareAndAggregateDataToRenderHotels = (tours: type.Tour[], hotels
                     // @ts-ignore
                     if (Number(hotel.id) === Number(value?.hotelID)) {
                         const countryFlagIcon = getFlagIconByCountryId(countryList, hotel?.countryId)
+                        const description = hotelDescription.find((item: any) => item.id === hotel.id)
                         // @ts-ignore 
-                        preparedHotelList.push({ ...value, ...hotel, countryFlag: countryFlagIcon })
+                        preparedHotelList.push({ ...value, ...hotel, ...description, countryFlag: countryFlagIcon })
                     }
                 }
             )

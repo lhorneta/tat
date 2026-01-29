@@ -60,4 +60,17 @@ export type StopSearchResponse = {
   message: string;
 };
 
-export type Tour = PriceOffer & GeoEntity & Hotel & { countryFlag: string }
+export type HotelDescriptionService = {
+  wifi: string,
+  aquapark: string,
+  tennis_court: string,
+  laundry: string,
+  parking: string,
+}
+
+export type HotelDescription = {
+  description: string,
+  service: HotelDescriptionService
+};
+
+export type Tour = PriceOffer & GeoEntity & Hotel & HotelDescription& { countryFlag: string }

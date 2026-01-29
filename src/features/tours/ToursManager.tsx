@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { TourCardDetail } from './TourCardDetail'
-import { stopSearchPrices, getSearchPrices, getHotels } from "../../mocks/api"
+import { stopSearchPrices, getSearchPrices, getHotels, getHotel } from "../../mocks/api"
 import * as type from "./types"
-import { getDropdownIcon, prepareAndAggregateDataToRenderHotels, getCountryIDFromInputValue } from './utils'
+import { getDropdownIcon, prepareAndAggregateDataToRenderHotels, getCountryIDFromInputValue, getHotelIDList } from './utils'
 import * as tourEndpoints from '../../app/services/tours';
 
 import './styles/styles.css';
@@ -28,6 +28,7 @@ export const ToursManager = () => {
     const [countries, setCountries] = useState([]);
     const [tours, setTours] = useState<type.Tour[]>([]); // drafted tours
     const [hotels, setHotels] = useState<type.Hotel[]>([]); // drafted hotels
+    const [hotelDescription, setHotelDescription] = useState<type.HotelDescription[]>([]); // drafted descriptions hotels
     const [preparedHotels, setPreparedHotels] = useState<type.Tour[]>([]); // final prepared data tours & hotels
 
     useEffect(() => {
@@ -38,11 +39,11 @@ export const ToursManager = () => {
     }, [countryList]);
 
     useEffect(() => {
-        if (Object.values(tours).length && Object.values(hotels).length) {
-            const preparedHotelList: type.Tour[] = prepareAndAggregateDataToRenderHotels(tours, hotels, countryList);
+        if (Object.values(tours).length && Object.values(hotels).length && Object.values(hotelDescription).length) {
+            const preparedHotelList: type.Tour[] = prepareAndAggregateDataToRenderHotels(tours, hotels, countryList, hotelDescription);
             preparedHotelList.length > 0 && setPreparedHotels(preparedHotelList);
         }
-    }, [tours, hotels]);
+    }, [tours, hotels, hotelDescription]);
 
     const onSearchGeo = (search: type.GeoEntity) => {
         setLoading(true)
@@ -109,6 +110,33 @@ export const ToursManager = () => {
         })
     }
 
+    const getHotelByHotelID = async (hotels: type.Hotel[]) => {
+        setLoading(true)
+        setErrorMessage('')
+        try {
+            const hotelsDescription: type.HotelDescription[] = [];
+            const hotelKeys = getHotelIDList(hotels)
+            hotelKeys.map((hotelID: number) => {
+                getHotel(hotelID).then((response) => {
+                    if (!response.ok) {
+                        setErrorMessage(`HTTP error! status: ${response.status} ${response}`)
+                    }
+                    setLoading(false)
+                    return response.json();
+                }).then((hotelDescription) => {
+                    hotelsDescription.push(hotelDescription)
+                    setHotelDescription(hotelsDescription)
+                    setLoading(false)
+                })
+            })
+
+        } catch (error: unknown) {
+            const specificError = error as Error
+            setErrorMessage(`Fetch failed: ${specificError.message}. Retrying...`)
+            setLoading(false)
+        }
+    }
+
     const cache = new Map();
     const getHotelListByCountryID = async (countryID: string) => {
         setLoading(true)
@@ -126,8 +154,13 @@ export const ToursManager = () => {
             }).then((hotels) => {
                 cache.set(cacheKey, hotels);
                 setLoading(false)
-                setHotels(hotels)
-                !Object.values(hotels).length && setMessage('За вашим запитом турів не знайдено')
+
+                if (!Object.values(hotels).length) {
+                    setMessage('За вашим запитом турів не знайдено')
+                } else {
+                    setHotels(hotels)
+                    getHotelByHotelID(hotels)
+                }
             })
         } catch (error: unknown) {
             const specificError = error as Error
@@ -153,7 +186,7 @@ export const ToursManager = () => {
                 setHotels([])
                 setPreparedHotels([])
             })
-        } catch (error: unknown ) {
+        } catch (error: unknown) {
             const specificError = error as Error
             setErrorMessage(`Fetch failed: ${specificError.message}.`)
         }
@@ -229,8 +262,7 @@ export const ToursManager = () => {
                                 >
                                     <img src={getDropdownIcon(option)} alt={option?.name} className="avatar-dropdown" /> {option?.name}
                                 </li>
-                            )
-                            )}
+                            ))}
                         </ul>
                     )}
                     <button className="custom-primary-btn" disabled={isDisabled} onClick={handleSubmitForm}>
